@@ -65,24 +65,33 @@
 include "koneksi.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id_laundry = $_POST["id_laundry"];
-    $jumlah_pakaian = $_POST["jumlah_pakaian"];
-    $berat = $_POST["berat"];
-    $jenis_layanan = $_POST["jenis_layanan"];
+    // Ambil data dari form
+    $id = 1;
+    $jenis_layanan = $_POST["layanan"];
+    $jumlah_pakaian = [];
+    if ($jenis_layanan == "satuan") {
+        $jumlah_pakaian["kemeja"] = $_POST["kemeja"];
+        $jumlah_pakaian["celana_panjang"] = $_POST["celana_panjang"];
+    }
+    $berat = $_POST["berat"] ?? 0; // Menggunakan null coalescing operator
     $harga_layanan = $_POST["harga_layanan"];
-    $harga_antar = $_POST["harga_antar"]; 
 
-  
+    // Validasi input
+    if (!is_numeric($berat) || $berat < 0 || !is_numeric($harga_layanan) || $harga_layanan < 0) {
+        echo "Input tidak valid.";
+        exit;
+    }
 
-    $sql = "INSERT INTO laundry (id_laundry,jumlah_pakaian, berat, jenis_layanan, harga_layanan, harga_antar) 
-            VALUES ('$id_laundry','$jumlah_pakaian', '$berat', '$jenis_layanan', '$harga_layanan', '$harga_antar')";
+    // Hitung harga total (contoh sederhana, perlu disesuaikan dengan logika bisnis)
+    $harga_total = $harga_layanan * $berat;
 
+    // Simpan data ke database
+    $sql = "INSERT INTO pesanan (jenis_layanan, jumlah_pakaian, berat, harga_layanan, harga_total) 
+            VALUES ('$jenis_layanan', '$jumlah_pakaian', $berat, $harga_layanan, $harga_total)";
     if (mysqli_query($conn, $sql)) {
-        echo "Pesanan berhasil ditambahkan.";
-      
-        exit(); 
+        echo "Pesanan berhasil ditambahkan";
     } else {
-        echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+        echo "Error: " . mysqli_error($conn);
     }
 }
 ?>
