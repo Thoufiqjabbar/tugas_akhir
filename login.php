@@ -1,67 +1,62 @@
+<h2>Selamat Datang di Laundry Online</h2>
+
+<form method="post" action="login.php">
+    <label for="username">Username:</label><br>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <input type="submit" value="Login">
+</form>
+
+<p>Belum punya akun? <a href="?p=register">Daftar di sini</a></p>
 <?php
-session_start();
 include "koneksi.php";
 
-$error_message = ""; // Variabel untuk menyimpan pesan error
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  $username = $_POST["username"];
-  $password = $_POST["password"];
-  $remember = isset($_POST["remember"]) ? true : false; // Cek apakah checkbox "ingat saya" dicentang
+    $username = $_POST["username"];
+    $password = $_POST["password"];
+    $error = array(); // Inisialisasi array untuk menyimpan pesan error
 
-  $sql = "SELECT * FROM user WHERE username='$username' AND password='$password'";
-  $result = $conn->query($sql);
-
-  if ($result->num_rows > 0) {
-    $_SESSION["username"] = $username;
-
-    // Jika "ingat saya" dicentang, set cookie
-    if ($remember) {
-      setcookie("username", $username, time() + (86400 * 30), "/"); // Cookie berlaku 30 hari
-      setcookie("password", $password, time() + (86400 * 30), "/");
+    // Validasi Username
+    if (empty($username)) {
+        $error[] = "Username tidak boleh kosong."; // Menggunakan array untuk menyimpan pesan error
     }
 
-    header("Location: home.php"); // Redirect ke halaman home setelah login berhasil
-  
-  } else {
-    $error_message = "Username atau password salah!";
-    header("Location: login.php"); // Redirect ke halaman login jika login gagal
-    
-  }
-}
+    // Validasi Password
+    if (empty($password)) {
+        $error[] = "Password tidak boleh kosong."; // Menggunakan array untuk menyimpan pesan error
+    }
 
-// Jika cookie ada, isi field username dan password
-if (isset($_COOKIE["username"])) {
-  $username = $_COOKIE["username"];
-  $password = $_COOKIE["password"];
-} else {
-  $username = "";
-  $password = "";
+    // Jika tidak ada error, proses login
+    if (empty($error)) {
+        // Mencegah SQL Injection dengan prepared statements
+        $sql = "SELECT * FROM user WHERE username=? AND password=?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ss", $username, $password);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        if (mysqli_num_rows($result) == 1) {
+            // Login berhasil
+            $_SESSION["username"] = $username; // Simpan username di session
+            header("Location: beranda.php"); // Arahkan ke halaman utama
+            exit(); // Tambahkan exit setelah header untuk menghentikan eksekusi
+        } else {
+            // Login gagal
+            $error[] = "Username atau password salah."; // Menggunakan array untuk menyimpan pesan error
+        }
+    }
+
+    // Tampilkan pesan error jika ada
+    if (!empty($error)) {
+        echo "<ul>";
+        foreach ($error as $msg) {
+            echo "<li>" . $msg . "</li>";
+        }
+        echo "</ul>";
+    }
 }
 ?>
 
-<h2>Form Login</h2>
-
-<?php if ($error_message): ?>
-<p style="color: red;"><?php echo $error_message; ?></p>
-<?php endif; ?>
-
-<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-  Username: <input type="text" name="username" value="<?php echo $username; ?>"><br><br>
-  Password: <input type="password" name="password" value="<?php echo $password; ?>"><br><br>
-  <input type="checkbox" name="remember" id="remember"> <label for="remember">Ingat Saya</label><br><br>
-  <input type="submit" value="Login">
-</form>
-
-<script>
-  // Validasi JavaScript untuk memastikan field tidak kosong
-  function validateForm() {
-    var username = document.forms["loginForm"]["username"].value;
-    var password = document.forms["loginForm"]["password"].value;
-
-    if (username == "" || password == "") {
-      alert("Harap isi username dan password.");
-      return false;
-    }
-  }
-</script>

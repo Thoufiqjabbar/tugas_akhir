@@ -2,11 +2,7 @@
 session_start();
 include "koneksi.php";
 
-// Cek apakah user sudah login
-if (!isset($_SESSION["username"])) {
-  header("Location: index.php?p=login");
-  exit();
-}
+
 
 // Ambil data user dari database
 $username = $_SESSION["username"];
@@ -16,18 +12,15 @@ $user = $result->fetch_assoc();
 
 // Proses pembuatan order
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  $id_pelanggan = $user["id"];
+  $id_pelanggan = $_POST["id"];
   $jumlah_pakaian = $_POST["jumlah_pakaian"];
-  $berat = $_POST["berat"];
   $jenis_layanan = $_POST["jenis_layanan"];
-  $harga_layanan = $_POST["harga_layanan"];
-  $harga_antar = $_POST["harga_antar"];
-  $total_harga = $harga_layanan + $harga_antar;
+ 
 
-  $sql = "INSERT INTO `order` (id_pelanggan, jumlah_pakaian, berat, jenis_layanan, harga_layanan, harga_antar, total_harga, status_order) 
-          VALUES ('$id_pelanggan', '$jumlah_pakaian', '$berat', '$jenis_layanan', '$harga_layanan', '$harga_antar', '$total_harga', 'pending')";
+  $sql = "INSERT INTO `order` (id_pelanggan, jumlah_pakaian, jenis_layanan) 
+          VALUES ('$id_pelanggan', '$jumlah_pakaian', '$jenis_layanan')";
 
-  if ($conn->query($sql) === TRUE) {
+  if (var_dump($conn->query($sql)) === TRUE) {
     echo "Order berhasil dibuat.";
   } else {
     echo "Error: " . $sql . "<br>" . $conn->error;
@@ -35,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Fetch jenis layanan from database
-$sql_layanan = "SELECT * FROM jenis_layanan";
+$sql_layanan = "SELECT * FROM jen";
 $result_layanan = $conn->query($sql_layanan);
 ?>
 
@@ -52,11 +45,15 @@ $result_layanan = $conn->query($sql_layanan);
       echo "<option value='".$row_layanan["nama_layanan"]."'>".$row_layanan["nama_layanan"]."</option>";
     }
   } else {
-    echo "<option value=''>Tidak ada jenis layanan</option>";
+    echo "<option value='cuci_satuan'>Cuci Satuan</option>
+          <option value='cuci_perkilo'>Cuci Perkilo</option>
+          <option value='cuci_perkilo_dan_gosok'>Cuci Perkilo dan Gosok</option>";
   }
   ?>
   </select><br><br>
-  Harga Layanan: <input type="number" name="harga_layanan"><br><br>
-  Harga Antar: <input type="number" name="harga_antar"><br><br>
+  
   <input type="submit" value="Buat Order">
 </form>
+<?php
+var_dump($_POST);
+?>
